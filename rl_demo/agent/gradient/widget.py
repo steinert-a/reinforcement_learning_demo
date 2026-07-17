@@ -21,13 +21,6 @@ class GradientWidget(QWidget):
     def setup_ui(self):
         layout_main = QVBoxLayout(self)
 
-        self._check_epsilon = QCheckBox("epsilon")
-        self._check_epsilon.setChecked(False)
-        self._slider_epsilon = QSlider(Qt.Orientation.Horizontal)
-        self._slider_epsilon.setRange(0, 100)
-        self._slider_epsilon.setValue(50)
-        self._slider_epsilon.setEnabled(False)
-
         self._check_alpha = QCheckBox("alpha")
         self._check_alpha.setChecked(False)
         self._slider_alpha = QSlider(Qt.Orientation.Horizontal)
@@ -40,7 +33,6 @@ class GradientWidget(QWidget):
         self._slider_step_size.setValue(50)
 
         ctrl_layout = QFormLayout()
-        ctrl_layout.addRow(self._check_epsilon, self._slider_epsilon)
         ctrl_layout.addRow(self._check_alpha, self._slider_alpha)
         ctrl_layout.addRow("step size", self._slider_step_size)
         layout_main.addLayout(ctrl_layout)
@@ -52,13 +44,9 @@ class GradientWidget(QWidget):
         layout_main.addWidget(self._table_data)
 
         self._check_alpha.toggled.connect(self.on_toggle_alpha)
-        self._check_epsilon.toggled.connect(self.on_toggle_epsilon)
 
     def on_toggle_alpha(self, checked):
         self._slider_alpha.setEnabled(checked)
-
-    def on_toggle_epsilon(self, checked):
-        self._slider_epsilon.setEnabled(checked)
 
     def update_table_row(self, action):
         self._table_data.setItem(
@@ -89,10 +77,6 @@ class GradientWidget(QWidget):
         else:
             self.update_table_row(action)
 
-    def get_epsilon(self):
-        value = self._slider_epsilon.value()
-        return value/100.0
-
     def get_alpha(self):
         value = self._slider_alpha.value()
         return value/100.0
@@ -113,16 +97,7 @@ class GradientWidget(QWidget):
         self.update_table()
 
     def next_action(self) -> int:
-        if self._check_epsilon.isChecked():
-            if np.random.random() < self.get_epsilon():
-                action = np.random.randint(0, len(self._action_space))
-            else:
-                action = np.argmax(self._action_preference)
-        else:
-            action = np.random.choice(self._action_count, p=self._strategy)
-            
-        return action
-
+        return np.random.choice(self._action_count, p=self._strategy)
 
     def reinforcement_learning(self, action: int, reward: float):
         self._action_used_total += 1
@@ -131,9 +106,7 @@ class GradientWidget(QWidget):
         alpha = 1.0 / self._action_used_total
         if self._check_alpha.isChecked():
             alpha = self.get_alpha()
-
-        self._action_baseline = self._action_baseline + alpha * (reward - self._action_baseline)
-        
+ 
         step_size = self.get_step_size()
     
         for a in range(self._action_count):
@@ -143,5 +116,6 @@ class GradientWidget(QWidget):
                 self._action_preference[a] = self._action_preference[a] - step_size * (reward - self._action_baseline) * self._strategy[a]
     
         self._strategy = softmax(self._action_preference)
+        self._action_baseline = self._action_baseline + alpha * (reward - self._action_baseline)
 
         self.update_table()

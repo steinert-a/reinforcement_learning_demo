@@ -60,7 +60,7 @@ class GradientNnWidget(QWidget):
 
         self._table_data = QTableWidget()
         self._table_data.setColumnCount(4)
-        self._table_data.setHorizontalHeaderLabels(["action", "count", "strategy", "preference"])
+        self._table_data.setHorizontalHeaderLabels(["action", "count", "policy", "preference"])
         layout_main.addWidget(self._table_data)
 
         self._check_alpha.toggled.connect(self.on_toggle_alpha)

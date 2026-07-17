@@ -12,7 +12,7 @@ class AgentGradientNn(IAgent):
         self._env_widget = GradientNnWidget()
     
     def name(self):
-        return "Gradient - Neural Network"
+        return "Associated Gradient - Neural Network"
 
     def widget(self):
         return self._env_widget
