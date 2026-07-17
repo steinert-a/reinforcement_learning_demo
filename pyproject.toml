@@ -1,0 +1,46 @@
+
+[project]
+name = "rl-demo" # PyPi name
+version = "0.0.1"
+description = "Reinforcement Learning - Demonstration"
+readme = "readme.md"
+requires-python = ">=3.12"
+authors = [{ name = "Andreas Steinert" }]
+keywords = ["rl", "ml", "ai", "demo"]
+dependencies = [
+    "dacite",
+    "datasets",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "python-dateutil",
+    "PyQt6",
+    "strenum",
+    "toml",
+    "torch",
+    "tqdm"
+] 
+[project.optional-dependencies]
+dev = [
+    "black",
+    "build",
+    "pip-tools",
+    "isort"
+]
+
+# https://setuptools.pypa.io/en/latest/userguide/quickstart.html
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "rl_demo",
+    "rl_demo.environment"
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+exclude = "^/venv/*"
