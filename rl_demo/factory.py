@@ -29,5 +29,8 @@ def agent_factory(args):
         case "policy_iter":
             from .agent.policy_iter import AgentPolicyIteration
             return AgentPolicyIteration(args)
+        case "mc_control":
+            from .agent.mc_control import AgentMonteCarloControl
+            return AgentMonteCarloControl(args)
 
     raise LabCommandLineException(f"agent {agent} does not exist")

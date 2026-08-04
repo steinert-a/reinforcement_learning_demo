@@ -27,7 +27,10 @@ class EnvPmTriangle(IEnvironment):
         return self._env_widget.get_state(), None
 
     def step(self, action):
+        old_reward = self._env_widget.get_reward()
         self._env_widget.perform_action(action)
-        return self._env_widget.get_state(), self._env_widget.get_reward(), None
+        new_reward = self._env_widget.get_reward()
+        reward = new_reward - old_reward
+        return self._env_widget.get_state(), reward, None
 
 

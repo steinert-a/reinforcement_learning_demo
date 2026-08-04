@@ -1,29 +1,30 @@
 # Reinforcement Learning Demo
 This repository contains a collection of reinforcement learning agents and environments. Its goal is to explore and evaluate different agent implementations across a variety of simulated environments.
 
+
 ## Agents
 The following list gives an overview of the implemented RL agents, along with additional information.
 
 ### Sample Average [sample]
-
 The Sample Average agent is one of the simplest reinforcement learning agents. It keeps track of the rewards received for each action and updates the estimated value of an action by calculating the average of all rewards obtained from that action.
 
 ### Weighted Average [weighted]
-
 The Weighted Average agent is similar to the Sample Average agent, but it updates the estimated action values using a weighted average of the observed rewards.
 
 ### Gradient Ascent [gradient]
-
 The Gradient Ascent method seeks to maximize the expected reward, $E[R_t]$. The policy is parameterized by action preferences, which are transformed into a probability distribution over actions using the Softmax function.
 
 ### Gradient Ascent - Neural Network [gradient_nn]
-
 The Gradient Ascent Neural Network method extends the Gradient Ascent approach by using a perceptron to learn and represent the action preferences. These learned preferences are then used to derive the policy.
 
 ### Dynamic Programming - Policy Iteration [policy_iter]
 Policy Iteration is a Dynamic Programming algorithm and therefore requires knowledge of the environment's dynamics. While some simulated environments can provide this information, this RL demo repository does not cover Dynamic Programming algorithms.
 
 For this reason, the environment dynamics used here are assumed to be deterministic. In other words, for any given situation, executing a specific action always leads to the same resulting state and produces the same reward.
+
+### Monte Carlo Control [mc_control]
+Monte Carlo Control is implemented here as an off-policy method with an $\epsilon$-soft policy.
+
 
 ## Environments
 The following list provides an overview of the implemented environments, along with some additional information.
