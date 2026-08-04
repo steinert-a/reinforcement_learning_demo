@@ -23,14 +23,18 @@ class Worker(QThread):
             if self._cancelled:
                 break
 
-            self.call_function()
+            terminated = self.call_function()
             self.progress.emit(i + 1)
+            if terminated:
+                break
 
         self.finished.emit()
 
     def run_endless(self):
         while not self._cancelled:
-            self.call_function()
+            terminated = self.call_function()
+            if terminated:
+                break
     
     def run(self):
         if self._steps > 0:
@@ -147,14 +151,21 @@ class ExperimentDialog(QDialog):
         self._steps_done.setText(f"{self._step_counter}")
 
     
-    def execute_step(self):
+    def execute_step(self) -> bool:
         observation_0, terminated = self._environment.state()
+
         if terminated is None or terminated == False:
             action = self._agent.next_action(observation_0)
             observation_1, reward, terminated = self._environment.step(action)
             self._agent.reinforcement_learning(observation_0, action, reward, observation_1, terminated)
-        self._step_counter += 1
-        self._steps_done.setText(f"{self._step_counter}")
+            self._step_counter += 1
+        
+        if terminated is None or terminated == False:  
+            self._steps_done.setText(f"{self._step_counter}")
+        else:
+            self._steps_done.setText(f"{self._step_counter} - terminated")
+
+        return terminated == True # None -> False
 
     def on_button_execute_steps_clicked(self):
         steps_to_do = self._steps_execute.value()

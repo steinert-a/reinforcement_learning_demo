@@ -1,10 +1,3 @@
-from .environment.pm_triangle import EnvPmTriangle
-
-from .agent.sample_average import AgentSampleAverage
-from .agent.weighted_average import AgentWeightedAverage
-from .agent.gradient import AgentGradient
-from .agent.gradient_nn import AgentGradientNn
-
 from .exceptions import LabCommandLineException
 
 def environment_factory(args):
@@ -12,6 +5,7 @@ def environment_factory(args):
     
     match environment:
         case "triangle":
+            from .environment.pm_triangle import EnvPmTriangle
             return EnvPmTriangle(args)
 
     raise LabCommandLineException(f"environment {environment} does not exist")
@@ -21,12 +15,19 @@ def agent_factory(args):
     
     match agent:
         case "sample":
+            from .agent.sample_average import AgentSampleAverage
             return AgentSampleAverage(args)
         case "weighted":
+            from .agent.weighted_average import AgentWeightedAverage
             return AgentWeightedAverage(args)
         case "gradient":
+            from .agent.gradient import AgentGradient
             return AgentGradient(args)
         case "gradient_nn":
+            from .agent.gradient_nn import AgentGradientNn
             return AgentGradientNn(args)
+        case "policy_iter":
+            from .agent.policy_iter import AgentPolicyIteration
+            return AgentPolicyIteration(args)
 
     raise LabCommandLineException(f"agent {agent} does not exist")

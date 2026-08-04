@@ -31,8 +31,8 @@ goto end
 
 :run
 rem environments: triangle
-rem agents: sample weighted gradient gradient_nn
-python -m rl_demo -e triangle -a gradient_nn
+rem agents: sample weighted gradient gradient_nn policy_iter
+python -m rl_demo -e triangle -a policy_iter
 goto end
 
 :end
