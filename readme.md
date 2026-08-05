@@ -36,6 +36,8 @@ The PM Triangle environment simulates different machine signals, with two signal
 
 The agent can perform five actions: increase or decrease the manufacturing speed, increase or decrease the cooling fluid flow, or do nothing.
 
+### Robot Rental [rental]
+An agent should learn how many robots to move between two robot locations each night in order to maximize long-term profit. This problem is known as **Jack's Car Rental** from Sutton & Barto's *Reinforcement Learning: An Introduction*.
 
 ## Links
 * [Reinforcement Learning, second edition: An Introduction](https://www.amazon.de/Reinforcement-Learning-Introduction-Adaptive-Computation/dp/0262039249?__mk_de_DE=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=2JQH61FI6BNU4&dib=eyJ2IjoiMSJ9.PgzjIs-Np-ssAU8N3sfGxf33cSZbQEDbfzQdG7mdDqVjNjBo-hWm-rq3T6KG-uj7VlJQ3kcl1jUdMkjocvl00fFaTE21c7A88mRTsOvWovwgml-u_zQyDWykuTGaCXhWRTDYAUUQDeDfUwNvlncsbputs9AX53c0YUfnuSmorL_PSmlWrZoLCl662diDTdrNc6ISlCPWQrcpJAfHPkY36IU3ZZBwN1-J83jOhFUfOs4.un1pDYfuLZGffQ85OixrSWsATbAh9sOugQGky5rcu0Q&dib_tag=se&keywords=reinforcement+learning&qid=1768468727&sprefix=reinforcement+learnin%2Caps%2C108&sr=8-1) 

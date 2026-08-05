@@ -27,8 +27,6 @@ class PmTriangleWidget(QWidget):
         self.plot()
     
     def setup_ui(self):
-        self.setWindowTitle("Reinforcement Learning - Experiment")
-
         layout_main = QHBoxLayout(self)
         layout_control = QVBoxLayout()
         layout_simulation= QVBoxLayout()

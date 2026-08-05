@@ -35,8 +35,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = [
+    "analytics",
     "rl_demo",
-    "rl_demo.environment"
+    "rl_demo.environment",
+    "rl_demo.agent"
 ]
 
 [tool.isort]

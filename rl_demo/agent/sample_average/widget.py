@@ -58,7 +58,7 @@ class SampleAverageWidget(QWidget):
         self._action_space = action_space
         self._action_values = [0] * len(action_space)
         self._action_count = [0] * len(action_space)
-        self._table_data.setRowCount(len(action_space)+1)
+        self._table_data.setRowCount(len(action_space))
         self.update_table()
 
         self._slider_epsilon.setValue(50)    
@@ -76,7 +76,7 @@ class SampleAverageWidget(QWidget):
             self._action_count[action] += 1
             self._action_values[action] = reward
         else:
-            self._action_values[action] = self._action_values[action] + 1/self._action_values[action] * (reward - self._action_values[action])
+            self._action_values[action] = self._action_values[action] + 1/self._action_count[action] * (reward - self._action_values[action])
             self._action_count[action] += 1
         
         self.update_table(action=action)

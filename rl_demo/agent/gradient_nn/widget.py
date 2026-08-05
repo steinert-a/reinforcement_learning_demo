@@ -121,7 +121,7 @@ class GradientNnWidget(QWidget):
             self._nn = Perceptron1(observation.size, self._action_count)
             self._optimizer = optim.Adam(self._nn.parameters(), lr=LEARNING_RATE)
 
-        self._table_data.setRowCount(self._action_count+1)
+        self._table_data.setRowCount(self._action_count)
         self.update_table(observation)
 
     def update_policy(self, observation):

@@ -59,7 +59,7 @@ class ExperimentDialog(QDialog):
         self.reset_all()
     
     def setup_ui(self):
-        self.setWindowTitle("Reinforcement Learning - Experiment")
+        self.setWindowTitle("Reinforcement Learning - Experiment - (c) Andreas Steinert")
 
         layout_main = QHBoxLayout(self)
         layout_control = QVBoxLayout()

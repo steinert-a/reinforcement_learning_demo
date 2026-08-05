@@ -7,6 +7,9 @@ def environment_factory(args):
         case "triangle":
             from .environment.pm_triangle import EnvPmTriangle
             return EnvPmTriangle(args)
+        case "rental":
+            from .environment.robot_rental import EnvRobotRental
+            return EnvRobotRental(args)
 
     raise LabCommandLineException(f"environment {environment} does not exist")
 
@@ -27,7 +30,7 @@ def agent_factory(args):
             from .agent.gradient_nn import AgentGradientNn
             return AgentGradientNn(args)
         case "policy_iter":
-            from .agent.policy_iter import AgentPolicyIteration
+            from .agent.policy_iteration import AgentPolicyIteration
             return AgentPolicyIteration(args)
         case "mc_control":
             from .agent.mc_control import AgentMonteCarloControl

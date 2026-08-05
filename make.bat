@@ -30,9 +30,9 @@ python -m isort rl_demo tests scripts
 goto end
 
 :run
-rem environments: triangle
+rem environments: triangle rental
 rem agents: sample weighted gradient gradient_nn policy_iter mc_control
-python -m rl_demo -e triangle -a mc_control
+python -m rl_demo -e rental -a mc_control
 goto end
 
 :end

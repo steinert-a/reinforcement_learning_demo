@@ -93,7 +93,7 @@ class GradientWidget(QWidget):
         self._action_used_count = [0] * self._action_count
         self._action_used_total = 0
         self._strategy = softmax(self._action_preference)
-        self._table_data.setRowCount(self._action_count+1)
+        self._table_data.setRowCount(self._action_count)
         self.update_table()
 
     def next_action(self) -> int:
