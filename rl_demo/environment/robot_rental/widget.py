@@ -193,9 +193,13 @@ class RobotRentalWidget(QWidget):
         return self._robots_waiting_b + self._robots_active_b
     
     def get_state(self):
-        robots_a = self.get_total_robots_a()
-        robots_b = self.get_total_robots_b()
-        return np.array([robots_a, robots_b], dtype=int)
+        if True: # state dim 2
+            return np.array([self._robots_waiting_a, self._robots_waiting_b], dtype=int)
+        else: # state dim 3
+            total_a = self.get_total_robots_a()
+            total_b = self.get_total_robots_b()
+            symmetric_normalized_ratio = (total_a - total_b) / TOTAL_ROBOTS
+            return np.array([self._robots_waiting_a, self._robots_waiting_b, symmetric_normalized_ratio], dtype=float)
 
     def requested_robot_move_ab(self, action:int):
         # move_a_to_b = action - ACTION_MOVE_ROBOTS_MAX
@@ -225,6 +229,9 @@ class RobotRentalWidget(QWidget):
             move_ab_active = -move_ab_active
         else:
             move_ab_waiting = 0
+            move_ab_active = 0
+        
+        if True: #  disable possibility to move active robots
             move_ab_active = 0
 
         self._robots_waiting_a -= move_ab_waiting

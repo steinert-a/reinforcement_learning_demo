@@ -1,9 +1,13 @@
 import numpy as np
-from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QVBoxLayout, QSlider, QLabel, QFormLayout, QTableWidget, QTableWidgetItem, QCheckBox, QSpinBox
+from PyQt6.QtWidgets import QWidget, QLineEdit, QPushButton, QVBoxLayout, QSlider, QLabel, QFormLayout, QTableWidget, QTableWidgetItem, QCheckBox, QSpinBox, QHBoxLayout
 from PyQt6.QtCore import Qt
 
 from dataclasses import dataclass
 from typing import Optional, List
+
+from .log_dialog import LogEpisodeReturnDialog, ActionValuesHeatmapDialog
+
+INIT_ACTION_VALUES = 0 # 99999
 
 @dataclass
 class Interaction:
@@ -11,8 +15,6 @@ class Interaction:
     action: int
     reward: float
     state_1: np.ndarray
-
-
 
 class MonteCarloControlWidget(QWidget):
     def __init__(self):
@@ -44,11 +46,11 @@ class MonteCarloControlWidget(QWidget):
 
         self._slider_epsilon = QSlider(Qt.Orientation.Horizontal)
         self._slider_epsilon.setRange(0, 100)
-        self._slider_epsilon.setValue(50)
+        self._slider_epsilon.setValue(10)
 
         self._slider_gamma = QSlider(Qt.Orientation.Horizontal)
         self._slider_gamma.setRange(0, 100)
-        self._slider_gamma.setValue(50)
+        self._slider_gamma.setValue(90)
 
         ctrl_layout = QFormLayout()
         ctrl_layout.addRow(self._check_round, self._spin_places)
@@ -62,9 +64,18 @@ class MonteCarloControlWidget(QWidget):
         self._table_data.setHorizontalHeaderLabels(["state", "action", "count", "value"])
         layout_main.addWidget(self._table_data)
 
+        layout_log = QHBoxLayout()
+        self._button_log_episode_return = QPushButton("episode return")
+        self._button_log_action_value_heat_map = QPushButton("action value heat map")
+        layout_log.addWidget(self._button_log_episode_return)
+        layout_log.addWidget(self._button_log_action_value_heat_map)
+        layout_main.addLayout(layout_log)
+
         # connections
         self._check_round.toggled.connect(self.on_round_toggled)
         self._check_episode_steps.toggled.connect(self.on_episode_steps_toggled)
+        self._button_log_episode_return.clicked.connect(self.on_log_episode_reward)
+        self._button_log_action_value_heat_map.clicked.connect(self.on_log_action_value_heat_map)
 
     def on_episode_steps_toggled(self, checked: bool):
         self._spin_episode_steps.setEnabled(checked)
@@ -118,6 +129,7 @@ class MonteCarloControlWidget(QWidget):
         self._policy = {}
         self._returns = {}
         self._episode:List[Interaction] = []
+        self._return_log = []
 
         self._table_data.setRowCount(0)
         self.update_table()
@@ -137,11 +149,10 @@ class MonteCarloControlWidget(QWidget):
 
     def make_state_key(self, state: np.ndarray):
         use_round = self._check_round.isChecked()
-        places = self._spin_places.value()
-
         target_state = state.copy().flatten()
 
         if use_round:
+            places = self._spin_places.value()
             target_state = np.round(target_state, places)
 
         return tuple(target_state.tolist())
@@ -149,7 +160,7 @@ class MonteCarloControlWidget(QWidget):
     def get_action_values(self, state):
         key = self.make_state_key(state)
         if key not in self._action_values:
-            self._action_values[key] = [0] * self._total_actions
+            self._action_values[key] = [INIT_ACTION_VALUES] * self._total_actions
 
         return self._action_values[key]
 
@@ -169,9 +180,10 @@ class MonteCarloControlWidget(QWidget):
             self._action_count[key_0][interaction.action] += 1  
 
             if key_0 not in self._action_values:
-                self._action_values[key_0] = [0] * self._total_actions
+                self._action_values[key_0] = [INIT_ACTION_VALUES] * self._total_actions
             self._action_values[key_0][interaction.action] = np.mean(self._returns[key_0][interaction.action])
         
+        self._return_log.append(ret)
         self._episode = []
         self.update_table()       
 
@@ -181,3 +193,38 @@ class MonteCarloControlWidget(QWidget):
 
         if terminated or (self._check_episode_steps.isChecked() and self._spin_episode_steps.value() <= len(self._episode)):
             self.reinforcement_learning_update()
+
+    def on_log_episode_reward(self):
+        LogEpisodeReturnDialog(self._return_log, self).exec()
+
+    def on_log_action_value_heat_map(self):
+        try:
+            x_set = set()
+            y_set = set()
+            r_set = set()
+            for key in self._action_values.keys():
+                x_set.add(key[0])
+                y_set.add(key[1])
+                r_set.add(key[2:])
+
+            sorted_x = sorted(x_set)
+            sorted_y = sorted(y_set)
+
+            heat_map_data = np.full((len(y_set), len(x_set)), np.nan)
+            temp_action_values = {}
+            for xi, x in enumerate(sorted_x):
+                for yi, y in enumerate(sorted_y):
+                    for r in r_set:
+                        key = (x,y) + r
+                        if key in self._action_values:
+                            if key not in temp_action_values:
+                                temp_action_values[(x,y)] = self._action_values[key]
+                            else:
+                                a = np.array(self._action_values[key])
+                                b = np.array(temp_action_values[(x,y)])
+                                temp_action_values[(x,y)] = a + b
+                            heat_map_data[yi][xi] = np.argmax(temp_action_values[(x,y)])
+
+            ActionValuesHeatmapDialog(heat_map_data, sorted_x, sorted_y, self).exec()
+        except Exception as exp:
+            print("can't calculate heat map: ", exp)
