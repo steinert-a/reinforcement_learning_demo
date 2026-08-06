@@ -6,25 +6,6 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import numpy as np
 
-class LogEpisodeReturnDialog(QDialog):
-    def __init__(self, return_log, parent=None):
-        super().__init__(parent)
-
-        layout = QVBoxLayout(self)
-
-        fig = Figure()
-        canvas = FigureCanvasQTAgg(fig)
-        layout.addWidget(canvas)
-
-        ax = fig.add_subplot(111)
-        ax.set_title("Episode Return Log")
-        ax.set_xlabel(f"episode")
-        ax.set_ylabel(f"return")
-
-        ax.plot([i for i in range(len(return_log))],return_log)
-        canvas.draw()
-
-
 class PolicyHeatmapDialog(QDialog):
     def __init__(self, policy, x_labels, y_labels, parent=None):
         super().__init__(parent)

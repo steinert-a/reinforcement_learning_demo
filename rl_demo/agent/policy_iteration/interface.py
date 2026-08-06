@@ -24,4 +24,4 @@ class AgentPolicyIteration(IAgent):
         return self._env_widget.next_action(observation)
 
     def reinforcement_learning(self,observation_0, action, reward, observation_1, terminated):
-        self._env_widget.reinforcement_learning(observation_0, action, reward)
+        self._env_widget.reinforcement_learning(observation_0, action, reward, observation_1)

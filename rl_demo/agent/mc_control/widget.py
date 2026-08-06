@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from dataclasses import dataclass
 from typing import Optional, List
 
-from .log_dialog import LogEpisodeReturnDialog, ActionValuesHeatmapDialog
+from .log_dialog import LogEpisodeReturnDialog, PolicyHeatmapDialog
 
 INIT_ACTION_VALUES = 0 # 99999
 
@@ -66,16 +66,16 @@ class MonteCarloControlWidget(QWidget):
 
         layout_log = QHBoxLayout()
         self._button_log_episode_return = QPushButton("episode return")
-        self._button_log_action_value_heat_map = QPushButton("action value heat map")
+        self._button_log_policy_heat_map = QPushButton("policy heat map")
         layout_log.addWidget(self._button_log_episode_return)
-        layout_log.addWidget(self._button_log_action_value_heat_map)
+        layout_log.addWidget(self._button_log_policy_heat_map)
         layout_main.addLayout(layout_log)
 
         # connections
         self._check_round.toggled.connect(self.on_round_toggled)
         self._check_episode_steps.toggled.connect(self.on_episode_steps_toggled)
         self._button_log_episode_return.clicked.connect(self.on_log_episode_reward)
-        self._button_log_action_value_heat_map.clicked.connect(self.on_log_action_value_heat_map)
+        self._button_log_policy_heat_map.clicked.connect(self.on_log_policy_heat_map)
 
     def on_episode_steps_toggled(self, checked: bool):
         self._spin_episode_steps.setEnabled(checked)
@@ -197,7 +197,7 @@ class MonteCarloControlWidget(QWidget):
     def on_log_episode_reward(self):
         LogEpisodeReturnDialog(self._return_log, self).exec()
 
-    def on_log_action_value_heat_map(self):
+    def on_log_policy_heat_map(self):
         try:
             x_set = set()
             y_set = set()
@@ -225,6 +225,6 @@ class MonteCarloControlWidget(QWidget):
                                 temp_action_values[(x,y)] = a + b
                             heat_map_data[yi][xi] = np.argmax(temp_action_values[(x,y)])
 
-            ActionValuesHeatmapDialog(heat_map_data, sorted_x, sorted_y, self).exec()
+            PolicyHeatmapDialog(heat_map_data, sorted_x, sorted_y, self).exec()
         except Exception as exp:
             print("can't calculate heat map: ", exp)
