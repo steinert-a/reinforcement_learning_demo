@@ -35,5 +35,8 @@ def agent_factory(args):
         case "mc_control":
             from .agent.mc_control import AgentMonteCarloControl
             return AgentMonteCarloControl(args)
+        case "sarsa":
+            from .agent.sarsa import AgentTdSarsa
+            return AgentTdSarsa(args)
 
     raise LabCommandLineException(f"agent {agent} does not exist")
