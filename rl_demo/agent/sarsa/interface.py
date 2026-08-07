@@ -12,7 +12,7 @@ class AgentTdSarsa(IAgent):
         self._env_widget = TdSarsaWidget()
     
     def name(self):
-        return "Temporal-Difference - SARSA - On Policy"
+        return "Temporal-Difference - SARSA"
 
     def widget(self):
         return self._env_widget

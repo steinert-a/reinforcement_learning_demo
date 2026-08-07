@@ -1,6 +1,13 @@
 import numpy as np
 import math
 
+def softmax(x):
+    x = np.array(x, dtype=float)
+    if x.size == 0:
+        return []
+    x = x - np.max(x)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x)
 
 def poisson_distribution(alpha):
     """Poisson distribution

@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt
 from dataclasses import dataclass
 from typing import Optional, List
 
+from analytics.probability import softmax
 from .log_dialog import PolicyHeatmapDialog
 
 INIT_ACTION_VALUES = 0 # 99999
@@ -38,7 +39,7 @@ class TdSarsaWidget(QWidget):
 
         self._slider_alpha = QSlider(Qt.Orientation.Horizontal)
         self._slider_alpha.setRange(0, 100)
-        self._slider_alpha.setValue(10)
+        self._slider_alpha.setValue(30)
 
         self._slider_epsilon = QSlider(Qt.Orientation.Horizontal)
         self._slider_epsilon.setRange(0, 100)
@@ -48,11 +49,15 @@ class TdSarsaWidget(QWidget):
         self._slider_gamma.setRange(0, 100)
         self._slider_gamma.setValue(90)
 
+        self._check_expected = QCheckBox("user expected sarsa")
+        self._check_expected.setChecked(True)
+
         ctrl_layout = QFormLayout()
         ctrl_layout.addRow(self._check_round, self._spin_places)
         ctrl_layout.addRow("alpha step size", self._slider_alpha)
         ctrl_layout.addRow("epsilon greedy", self._slider_epsilon)
         ctrl_layout.addRow("gamma discount", self._slider_gamma)
+        ctrl_layout.addRow(self._check_expected)
         layout_main.addLayout(ctrl_layout)
 
         self._table_data = QTableWidget()
@@ -148,7 +153,7 @@ class TdSarsaWidget(QWidget):
 
         return key
     
-    def reinforcement_learning_update(self, interaction_0: Interaction, interaction_1: Interaction):
+    def reinforcement_learning_sarsa(self, interaction_0: Interaction, interaction_1: Interaction):
         alpha = self.get_alpha()
         gamma = self.get_gamma()
         
@@ -175,12 +180,35 @@ class TdSarsaWidget(QWidget):
         self._action_values[key_0][action_0] = q_0 + alpha * (reward + gamma * q_1 - q_0) 
         self._action_count[key_0][action_0] += 1
 
+    def reinforcement_learning_expected_sarsa(self, interaction: Interaction):
+        alpha = self.get_alpha()
+        gamma = self.get_gamma()
+        
+        key_0 = self.make_state_key(interaction.state_0) 
+        key_1 = self.make_state_key(interaction.state_1)
+        action = interaction.action
+        reward =  interaction.reward
+
+        q_0 = self._action_values[key_0][action]
+        if interaction.terminated:
+            q_1 = 0.0 # expected return from terminal state is always 0
+        else:
+            policy = softmax(self._action_values[key_1])
+            q_values = np.asarray(self._action_values[key_1], dtype=float)
+            q_1 = np.sum(policy * q_values) # Expected value of q(a|s)
+
+        self._action_values[key_0][action] = q_0 + alpha * (reward + gamma * q_1 - q_0) 
+        self._action_count[key_0][action] += 1
+
     def reinforcement_learning(self, observation_0: np.ndarray, action: int, reward: float, observation_1: np.ndarray, terminated: Optional[bool]):
         interaction = Interaction(observation_0, action, reward, observation_1, terminated == True)
 
-        if self._last_interaction is not None:
-            self.reinforcement_learning_update(self._last_interaction, interaction)
-        
+        if self._check_expected.isChecked():
+            if self._last_interaction is not None:
+                self.reinforcement_learning_sarsa(self._last_interaction, interaction)
+        else:
+            self.reinforcement_learning_expected_sarsa(interaction)
+
         if interaction.terminated is not None and interaction.terminated == False:
             self._last_interaction = interaction
         else:
