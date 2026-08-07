@@ -23,7 +23,7 @@ Policy Iteration is a Dynamic Programming algorithm and therefore requires knowl
 For this reason, the environment dynamics used here are assumed to be deterministic. In other words, for any given situation, executing a specific action always leads to the same resulting state and produces the same reward.
 
 ### Monte Carlo Control [mc_control]
-Monte Carlo Control is implemented here as an off-policy method with an $\epsilon$-soft policy.
+Monte Carlo Control is implemented here as an on-policy method with an $\epsilon$-soft policy.
 
 
 ## Environments

@@ -21,7 +21,20 @@ class LogEpisodeReturnDialog(QDialog):
         ax.set_xlabel(f"episode")
         ax.set_ylabel(f"return")
 
-        ax.plot([i for i in range(len(return_log))],return_log)
+        x = [i for i in range(len(return_log))]
+        y = return_log
+
+        if len(x) > 300:
+            n = 200
+            y_in = np.array(y)
+            chunks = np.array_split(y_in, n)
+            y = [chunk.mean() for chunk in chunks]
+            x = [
+                (chunk_indices[0] + chunk_indices[-1]) / 2
+                for chunk_indices in np.array_split(np.arange(len(y_in)), n)
+            ]
+
+        ax.plot(x,y)
         canvas.draw()
 
 

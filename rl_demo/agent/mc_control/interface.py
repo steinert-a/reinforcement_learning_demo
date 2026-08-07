@@ -12,7 +12,7 @@ class AgentMonteCarloControl(IAgent):
         self._env_widget = MonteCarloControlWidget()
     
     def name(self):
-        return "Monte Carlo Control - Off Policy"
+        return "Monte Carlo Control - On Policy"
 
     def widget(self):
         return self._env_widget

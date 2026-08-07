@@ -52,11 +52,14 @@ class MonteCarloControlWidget(QWidget):
         self._slider_gamma.setRange(0, 100)
         self._slider_gamma.setValue(90)
 
+        self._check_first_visit = QCheckBox("first-visit (else every-visit)")
+
         ctrl_layout = QFormLayout()
         ctrl_layout.addRow(self._check_round, self._spin_places)
         ctrl_layout.addRow(self._check_episode_steps, self._spin_episode_steps)
         ctrl_layout.addRow("epsilon soft policy", self._slider_epsilon)
         ctrl_layout.addRow("gamma", self._slider_gamma)
+        ctrl_layout.addRow(self._check_first_visit)
         layout_main.addLayout(ctrl_layout)
 
         self._table_data = QTableWidget()
@@ -126,7 +129,6 @@ class MonteCarloControlWidget(QWidget):
 
         self._action_values = {}
         self._action_count = {}
-        self._policy = {}
         self._returns = {}
         self._episode:List[Interaction] = []
         self._return_log = []
@@ -136,8 +138,8 @@ class MonteCarloControlWidget(QWidget):
 
     def get_epsilon_soft_policy(self, state):
         epsilon = self.get_epsilon()
-        action_values = self.get_action_values(state)
-        best_action = np.argmax(action_values)
+        key = self.make_state_key(state)
+        best_action = np.argmax(self._action_values[key])
 
         policy = np.full(self._total_actions, epsilon / self._total_actions)
         policy[best_action] = policy[best_action] + 1.0 - epsilon
@@ -154,34 +156,42 @@ class MonteCarloControlWidget(QWidget):
         if use_round:
             places = self._spin_places.value()
             target_state = np.round(target_state, places)
+        
+        key = tuple(target_state.tolist())
 
-        return tuple(target_state.tolist())
-    
-    def get_action_values(self, state):
-        key = self.make_state_key(state)
         if key not in self._action_values:
             self._action_values[key] = [INIT_ACTION_VALUES] * self._total_actions
+        if key not in self._action_count:
+            self._action_count[key] = [0] * self._total_actions
 
-        return self._action_values[key]
-
+        return key
+    
     def reinforcement_learning_update(self):
         gamma = self.get_gamma()
+        first_visit = self._check_first_visit.isChecked()
         ret = 0
-        for interaction in reversed(self._episode):
+
+        reversed_episode = list(reversed(self._episode))
+        for idx, interaction in enumerate(reversed_episode):
             ret = gamma * ret + interaction.reward
             key_0 = self.make_state_key(interaction.state_0)
 
-            if key_0 not in self._returns:
-                self._returns[key_0] = [[]] * self._total_actions
-            self._returns[key_0][interaction.action].append(ret)
+            execute_update = True
+            if first_visit: # first-visit / every-visit
+                sub_episode = reversed_episode[idx+1:]
+                for sub_interaction in sub_episode:
+                    key_0 = self.make_state_key(interaction.state_0)
+                    sub_key_0 = self.make_state_key(sub_interaction.state_0)
+                    if key_0 == sub_key_0 and interaction.action == sub_interaction.action:
+                        # it is not the first visit
+                        execute_update = False
+                        break
 
-            if key_0 not in self._action_count:
-                self._action_count[key_0] = [0] * self._total_actions
-            self._action_count[key_0][interaction.action] += 1  
-
-            if key_0 not in self._action_values:
-                self._action_values[key_0] = [INIT_ACTION_VALUES] * self._total_actions
-            self._action_values[key_0][interaction.action] = np.mean(self._returns[key_0][interaction.action])
+            if execute_update:
+                self._action_count[key_0][interaction.action] += 1
+                n = self._action_count[key_0][interaction.action]
+                q = self._action_values[key_0][interaction.action]
+                self._action_values[key_0][interaction.action] = q + (ret - q) / n
         
         self._return_log.append(ret)
         self._episode = []
