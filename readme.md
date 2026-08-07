@@ -28,6 +28,9 @@ Monte Carlo Control is implemented here as an on-policy method with an $\epsilon
 ### Temporal-Difference Learning - SARSA [sarsa]
 The implemented Temporal-Difference learning method, State-Action-Reward-State-Action (SARSA), uses an on-policy $\epsilon$-greedy strategy. Also Expected SARSA is implemented as an off-policy algorithm.
 
+### Q-Learning [q_learning]
+Q-Learning and Double Q-Learning are Temporal-Difference control algorithms.
+
 ## Environments
 The following list provides an overview of the implemented environments, along with some additional information.
 

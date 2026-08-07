@@ -8,17 +8,7 @@ from typing import Optional, List
 from analytics.probability import softmax
 from .log_dialog import PolicyHeatmapDialog
 
-INIT_ACTION_VALUES = 0 # 99999
-
-@dataclass
-class Interaction:
-    state_0: np.ndarray
-    action: int
-    reward: float
-    state_1: np.ndarray
-    terminated: bool
-
-class TdSarsaWidget(QWidget):
+class QLearningWidget(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -49,15 +39,15 @@ class TdSarsaWidget(QWidget):
         self._slider_gamma.setRange(0, 100)
         self._slider_gamma.setValue(90)
 
-        self._check_expected = QCheckBox("use expected sarsa")
-        self._check_expected.setChecked(True)
+        self._check_double = QCheckBox("double q-learning")
+        self._check_double.setChecked(True)
 
         ctrl_layout = QFormLayout()
         ctrl_layout.addRow(self._check_round, self._spin_places)
         ctrl_layout.addRow("alpha step size", self._slider_alpha)
         ctrl_layout.addRow("epsilon greedy", self._slider_epsilon)
         ctrl_layout.addRow("gamma discount", self._slider_gamma)
-        ctrl_layout.addRow(self._check_expected)
+        ctrl_layout.addRow(self._check_double)
         layout_main.addLayout(ctrl_layout)
 
         self._table_data = QTableWidget()
@@ -78,10 +68,14 @@ class TdSarsaWidget(QWidget):
         self._spin_places.setEnabled(checked)
 
     def update_table(self):
-        self._table_data.setRowCount(len(self._action_values.keys()) * len(self._action_space))
+        self._table_data.setRowCount(len(self._action_values_0.keys()) * self._total_actions)
 
         row = 0
-        for key in self._action_values.keys():
+        for key in self._action_values_0.keys():
+            q_0 = np.asarray(self._action_values_0[key])
+            q_1 = np.asarray(self._action_values_1[key])
+            q = q_0 + q_1
+            
             for action in range(len(self._action_space)):
                 self._table_data.setItem(
                         row,
@@ -101,7 +95,7 @@ class TdSarsaWidget(QWidget):
                 self._table_data.setItem(
                         row,
                         3,
-                        QTableWidgetItem(str(self._action_values[key][action]))
+                        QTableWidgetItem(str(q[action]))
                 )
                 row += 1
 
@@ -121,7 +115,8 @@ class TdSarsaWidget(QWidget):
         self._action_space = action_space
         self._total_actions = len(self._action_space)
 
-        self._action_values = {}
+        self._action_values_0 = {}
+        self._action_values_1 = {}
         self._action_count = {}
         self._last_interaction = None
 
@@ -133,7 +128,9 @@ class TdSarsaWidget(QWidget):
         if np.random.random() < self.get_epsilon():
             action = np.random.randint(0, self._total_actions)
         else:
-            action = np.argmax(self._action_values[key])
+            q_0 = np.asarray(self._action_values_0[key])
+            q_1 = np.asarray(self._action_values_1[key])
+            action = np.argmax(q_0 + q_1)
         return action
 
     def make_state_key(self, state: np.ndarray):
@@ -146,73 +143,36 @@ class TdSarsaWidget(QWidget):
         
         key = tuple(target_state.tolist())
 
-        if key not in self._action_values:
-            self._action_values[key] = [INIT_ACTION_VALUES] * self._total_actions
+        if key not in self._action_values_0:
+            self._action_values_0[key] = [0.0] * self._total_actions
+        if key not in self._action_values_1:
+            self._action_values_1[key] = [0.0] * self._total_actions
         if key not in self._action_count:
             self._action_count[key] = [0] * self._total_actions
 
         return key
-    
-    def reinforcement_learning_sarsa(self, interaction_0: Interaction, interaction_1: Interaction):
-        alpha = self.get_alpha()
-        gamma = self.get_gamma()
-        
-        if interaction_0.terminated: 
-            return
-        
-        key_0 = self.make_state_key(interaction_0.state_0) 
-        key_1 = self.make_state_key(interaction_0.state_1)
-        assert key_1 == self.make_state_key(interaction_1.state_0)
-
-        action_0 = interaction_0.action
-        action_1 = interaction_1.action
-
-        reward =  interaction_0.reward
-
-        q_0 = self._action_values[key_0][action_0]
-        if interaction_0.terminated:
-            q_1 = 0.0 # expected return from terminal state is always 0
-        else:
-            q_1 = self._action_values[key_1][action_1]
-
-        # reward + gamma * q_1 == q_0 => defines error
-        # new q_0 = q_0 + alpha * error 
-        self._action_values[key_0][action_0] = q_0 + alpha * (reward + gamma * q_1 - q_0) 
-        self._action_count[key_0][action_0] += 1
-
-    def reinforcement_learning_expected_sarsa(self, interaction: Interaction):
-        alpha = self.get_alpha()
-        gamma = self.get_gamma()
-        
-        key_0 = self.make_state_key(interaction.state_0) 
-        key_1 = self.make_state_key(interaction.state_1)
-        action = interaction.action
-        reward =  interaction.reward
-
-        q_0 = self._action_values[key_0][action]
-        if interaction.terminated:
-            q_1 = 0.0 # expected return from terminal state is always 0
-        else:
-            policy = softmax(self._action_values[key_1])
-            q_values = np.asarray(self._action_values[key_1], dtype=float)
-            q_1 = np.sum(policy * q_values) # Expected value of q(a|s)
-
-        self._action_values[key_0][action] = q_0 + alpha * (reward + gamma * q_1 - q_0) 
-        self._action_count[key_0][action] += 1
 
     def reinforcement_learning(self, observation_0: np.ndarray, action: int, reward: float, observation_1: np.ndarray, terminated: Optional[bool]):
-        interaction = Interaction(observation_0, action, reward, observation_1, terminated == True)
+        alpha = self.get_alpha()
+        gamma = self.get_gamma()
+        
+        key_0 = self.make_state_key(observation_0) 
+        key_1 = self.make_state_key(observation_1)
 
-        if self._check_expected.isChecked():
-            if self._last_interaction is not None:
-                self.reinforcement_learning_sarsa(self._last_interaction, interaction)
+        if self._check_double.isChecked():
+            if np.random.random() < self.get_epsilon():
+                q_0 = self._action_values_0[key_0]
+                q_1 = self._action_values_1[key_1]
+            else:
+                q_0 = self._action_values_1[key_0]
+                q_1 = self._action_values_0[key_1]
         else:
-            self.reinforcement_learning_expected_sarsa(interaction)
-
-        if interaction.terminated is not None and interaction.terminated == False:
-            self._last_interaction = interaction
-        else:
-            self._last_interaction = None
+            q_0 = self._action_values_0[key_0]
+            q_1 = self._action_values_0[key_1]
+        
+        q_0[action] = q_0[action] + alpha * (reward + gamma*q_1[np.argmax(q_1)] - q_0[action])
+    
+        self._action_count[key_0][action] += 1
         self.update_table()
 
     def on_log_policy_heat_map(self):
@@ -220,7 +180,7 @@ class TdSarsaWidget(QWidget):
             x_set = set()
             y_set = set()
             r_set = set()
-            for key in self._action_values.keys():
+            for key in self._action_values_0.keys():
                 x_set.add(key[0])
                 y_set.add(key[1])
                 r_set.add(key[2:])
@@ -234,12 +194,15 @@ class TdSarsaWidget(QWidget):
                 for yi, y in enumerate(sorted_y):
                     for r in r_set:
                         key = (x,y) + r
-                        if key in self._action_values:
+                        if key in self._action_values_0:
+                            q_0 = np.asarray(self._action_values_0[key])
+                            q_1 = np.asarray(self._action_values_1[key])
+                            q = q_0 + q_1
                             if key not in temp_action_values:
-                                temp_action_values[(x,y)] = self._action_values[key]
+                                temp_action_values[(x,y)] = q
                             else:
-                                a = np.array(self._action_values[key])
-                                b = np.array(temp_action_values[(x,y)])
+                                a = q
+                                b = temp_action_values[(x,y)]
                                 temp_action_values[(x,y)] = a + b
                             heat_map_data[yi][xi] = np.argmax(temp_action_values[(x,y)])
 

@@ -31,8 +31,8 @@ goto end
 
 :run
 rem environments: triangle rental
-rem agents: sample weighted gradient gradient_nn policy_iter mc_control sarsa
-python -m rl_demo -e rental -a sarsa
+rem agents: sample weighted gradient gradient_nn policy_iter mc_control sarsa q_learning
+python -m rl_demo -e rental -a q_learning
 goto end
 
 :end

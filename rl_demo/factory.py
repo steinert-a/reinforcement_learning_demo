@@ -38,5 +38,8 @@ def agent_factory(args):
         case "sarsa":
             from .agent.sarsa import AgentTdSarsa
             return AgentTdSarsa(args)
+        case "q_learning":
+            from .agent.q_learning import AgentQLearning
+            return AgentQLearning(args)
 
     raise LabCommandLineException(f"agent {agent} does not exist")
